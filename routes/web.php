@@ -70,6 +70,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/{client}',       [ClientController::class, 'show'])->name('show');
         Route::patch('/{client}/toggle', [ClientController::class, 'toggle'])->name('toggle');
     });
+
+    // Forum Moderation
+    Route::get('/forum', [\App\Http\Controllers\Admin\ForumController::class, 'index'])->name('forum.index');
+    Route::delete('/forum/topic/{topic}', [\App\Http\Controllers\Admin\ForumController::class, 'destroy'])->name('forum.topic.destroy');
 });
 
 Route::middleware('auth')->group(function () {

@@ -81,6 +81,10 @@
     </div>
 
     <form action="{{ route('voitures.index') }}" method="GET" class="filter-bar">
+        <div class="filter-group" style="flex:1.5">
+            <label>Modèle</label>
+            <input type="text" name="q" value="{{ request('q') }}" placeholder="Rechercher un modèle (ex: A3)...">
+        </div>
         <div class="filter-group">
             <label>Marque</label>
             <select name="marque">

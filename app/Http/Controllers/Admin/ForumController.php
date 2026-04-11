@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ForumTopic;
-use App\Models\ForumComment;
+use Illuminate\Http\Request;
 
 class ForumController extends Controller
 {
@@ -14,15 +14,9 @@ class ForumController extends Controller
         return view('admin.forum.index', compact('topics'));
     }
 
-    public function destroyTopic(ForumTopic $topic)
+    public function destroy(ForumTopic $topic)
     {
         $topic->delete();
-        return redirect()->route('admin.forum.index')->with('success', 'Sujet supprimé.');
-    }
-
-    public function destroyComment(ForumComment $comment)
-    {
-        $comment->delete();
-        return back()->with('success', 'Commentaire supprimé.');
+        return redirect()->route('admin.forum.index')->with('success', 'Sujet supprimé avec succès.');
     }
 }

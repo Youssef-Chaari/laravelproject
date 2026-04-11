@@ -22,6 +22,9 @@ class VoitureController extends Controller
         if ($request->filled('carburant')) {
             $query->where('carburant', $request->carburant);
         }
+        if ($request->filled('q')) {
+            $query->where('modele', 'like', '%' . $request->q . '%');
+        }
 
         $vehicules = $query->latest()->paginate(12);
         $marques = Marque::orderBy('nom')->get();

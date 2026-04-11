@@ -201,6 +201,10 @@
             <i class="fa-solid fa-users"></i>
             Clients
         </a>
+        <a href="{{ route('admin.forum.index') }}" class="sidebar-link {{ request()->routeIs('admin.forum.*') ? 'active' : '' }}">
+            <i class="fa-solid fa-comments"></i>
+            Forum
+        </a>
     </nav>
 
     <div class="sidebar-footer">
