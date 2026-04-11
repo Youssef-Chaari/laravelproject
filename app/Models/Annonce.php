@@ -46,6 +46,11 @@ class Annonce extends Model
         return $this->belongsTo(Marque::class);
     }
 
+    public function images()
+    {
+        return $this->morphMany(CarImage::class, 'imageable');
+    }
+
     public function getVendeurPrenomAttribute()
     {
         return $this->user?->first_name ?? explode(' ', $this->user?->name ?? 'Vendeur')[0];

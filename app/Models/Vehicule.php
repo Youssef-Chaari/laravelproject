@@ -45,4 +45,9 @@ class Vehicule extends Model
     {
         return $this->belongsTo(Marque::class);
     }
+
+    public function images()
+    {
+        return $this->morphMany(CarImage::class, 'imageable');
+    }
 }

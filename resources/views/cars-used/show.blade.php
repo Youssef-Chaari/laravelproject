@@ -38,7 +38,38 @@
         font-size: 12px; font-weight: 700;
         padding: 4px 12px; border-radius: 20px;
         text-transform: uppercase; letter-spacing: 0.5px;
+        z-index: 10;
     }
+
+    /* ── GALLERY NAVIGATION ── */
+    .gallery-nav {
+        position: absolute; top: 0; bottom: 0; width: 60px;
+        display: flex; align-items: center; justify-content: center;
+        background: transparent; border: none; color: #fff;
+        font-size: 24px; cursor: pointer; transition: all .2s;
+        z-index: 5;
+    }
+    .gallery-nav.prev { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.3), transparent); }
+    .gallery-nav.next { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.3), transparent); }
+    .gallery-nav:hover { background: rgba(0,0,0,0.4); font-size: 28px; }
+
+    /* ── THUMBNAILS ── */
+    .gallery-thumbnails {
+        display: flex; gap: 10px; margin-top: 12px;
+        overflow-x: auto; padding-bottom: 5px;
+    }
+    .gallery-thumbnails::-webkit-scrollbar { height: 4px; }
+    .gallery-thumbnails::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 2px; }
+    
+    .thumb-item {
+        width: 80px; height: 60px; border-radius: 8px;
+        overflow: hidden; cursor: pointer; flex-shrink: 0;
+        border: 2px solid transparent; transition: all .2s;
+        background: var(--gray-100);
+    }
+    .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-item.active { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+    .thumb-item:hover { transform: translateY(-2px); }
 
     /* ── INFO CARDS ── */
     .info-card {
@@ -148,9 +179,31 @@
 
         {{-- LEFT: IMAGE + INFO --}}
         <div>
-            <div class="gallery-main" style="background: linear-gradient(135deg, #3B82F6, #1E3A8A)">
-                <span class="gallery-badge">Occasion</span>
-                <span>🚙</span>
+            <div class="gallery-wrapper">
+                <div class="gallery-main" id="main-viewer">
+                    <span class="gallery-badge">Occasion</span>
+                    
+                    @if($annonce->images->isNotEmpty())
+                        <button class="gallery-nav prev" onclick="changeImage(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button class="gallery-nav next" onclick="changeImage(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                        
+                        <img id="main-img" src="{{ asset('storage/' . $annonce->images->first()->path) }}" alt="{{ $annonce->titre }}" style="width:100%; height:100%; object-fit:cover; transition: opacity 0.2s;">
+                    @else
+                        <div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-size:120px; background:linear-gradient(135deg, #3B82F6, #1E3A8A)">
+                            <span>🚙</span>
+                        </div>
+                    @endif
+                </div>
+
+                @if($annonce->images->count() > 1)
+                    <div class="gallery-thumbnails">
+                        @foreach($annonce->images as $index => $image)
+                            <div class="thumb-item {{ $index === 0 ? 'active' : '' }}" onclick="jumpToImage({{ $index }})" data-index="{{ $index }}">
+                                <img src="{{ asset('storage/' . $image->path) }}" alt="Thumbnail">
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             {{-- Description --}}
@@ -207,7 +260,7 @@
                     @if(auth()->id() === $annonce->user_id || auth()->user()->isAdmin())
                         <div class="admin-actions">
                             <a href="#" class="btn btn-outline" style="flex:1; justify-content:center">Modifier</a>
-                            <form method="POST" action="{{ route('occasions.index') }}" onsubmit="return confirm('Supprimer ?')" style="flex:1">
+                            <form method="POST" action="{{ route('occasions.destroy', $annonce->id) }}" onsubmit="return confirm('Désirez-vous vraiment supprimer cette annonce ?')" style="flex:1">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-danger" style="width:100%; justify-content:center">Supprimer</button>
                             </form>
@@ -220,4 +273,52 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    const images = @json($annonce->images->map(fn($i) => asset('storage/' . $i->path)));
+    let currentIndex = 0;
+
+    function changeImage(delta) {
+        if (!images.length) return;
+        currentIndex = (currentIndex + delta + images.length) % images.length;
+        updateGallery();
+    }
+
+    function jumpToImage(index) {
+        currentIndex = index;
+        updateGallery();
+    }
+
+    function updateGallery() {
+        const mainImg = document.getElementById('main-img');
+        const thumbs = document.querySelectorAll('.thumb-item');
+
+        // Fade out
+        mainImg.style.opacity = '0';
+
+        setTimeout(() => {
+            mainImg.src = images[currentIndex];
+            // Fade in
+            mainImg.style.opacity = '1';
+        }, 150);
+
+        // Update active thumb
+        thumbs.forEach((thumb, i) => {
+            if (i === currentIndex) {
+                thumb.classList.add('active');
+                thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } else {
+                thumb.classList.remove('active');
+            }
+        });
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') changeImage(-1);
+        if (e.key === 'ArrowRight') changeImage(1);
+    });
+</script>
+@endpush
 

@@ -11,7 +11,7 @@ class VoitureController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Vehicule::with('marque');
+        $query = Vehicule::with('marque', 'images');
 
         if ($request->filled('marque')) {
             $query->where('marque_id', $request->marque);
@@ -42,7 +42,7 @@ class VoitureController extends Controller
     public function show(string $marqueSlug, string $vehiculeSlug)
     {
         $marque   = Marque::where('slug', $marqueSlug)->firstOrFail();
-        $vehicule = Vehicule::where('marque_id', $marque->id)
+        $vehicule = Vehicule::with('marque', 'images')->where('marque_id', $marque->id)
                             ->where('slug', $vehiculeSlug)
                             ->firstOrFail();
         return view('cars-new.show', compact('marque', 'vehicule'));

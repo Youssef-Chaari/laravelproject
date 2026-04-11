@@ -134,9 +134,13 @@
         <div class="vehicles-grid">
             @foreach($vehicules as $vehicule)
             <a href="{{ route('voitures.show', [$vehicule->marque->slug, $vehicule->slug]) }}" class="vehicle-card">
-                <div class="vehicle-image" style="background:{{ $vehicule->couleur_bg ?? 'linear-gradient(135deg,#EF4444,#B91C1C)' }}">
+                <div class="vehicle-image" style="background:{{ $vehicule->images->isNotEmpty() ? 'none' : ($vehicule->couleur_bg ?? 'linear-gradient(135deg,#EF4444,#B91C1C)') }}">
                     <span class="vehicle-brand">{{ $vehicule->marque->nom }}</span>
-                    <span>🚗</span>
+                    @if($vehicule->images->isNotEmpty())
+                        <img src="{{ asset('storage/' . $vehicule->images->first()->path) }}" alt="{{ $vehicule->modele }}" style="width:100%; height:100%; object-fit:cover">
+                    @else
+                        <span>🚗</span>
+                    @endif
                     <span class="vehicle-year">{{ $vehicule->annee }}</span>
                 </div>
                 <div class="vehicle-info">
