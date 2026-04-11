@@ -168,8 +168,12 @@
         $color = $colors[$loop->index % count($colors)];
     @endphp
     <div class="occ-card">
-        <div class="occ-image" style="background:{{ $color }}">
-            <span>🚙</span>
+        <div class="occ-image" style="background:{{ $annonce->images->isNotEmpty() ? 'none' : $color }}">
+            @if($annonce->images->isNotEmpty())
+                <img src="{{ asset('storage/' . $annonce->images->first()->path) }}" alt="{{ $annonce->titre }}" style="width:100%; height:100%; object-fit:cover">
+            @else
+                <span>🚙</span>
+            @endif
             <span class="occ-date-badge">{{ $annonce->date_relative }}</span>
         </div>
         <div class="occ-body">

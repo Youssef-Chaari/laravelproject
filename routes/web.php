@@ -32,6 +32,7 @@ Route::prefix('occasions')->name('occasions.')->group(function () {
     Route::middleware('auth')->group(function() {
         Route::get('/deposer', [AnnonceController::class, 'create'])->name('create');
         Route::post('/',      [AnnonceController::class, 'store'])->name('store');
+        Route::delete('/{annonce}', [AnnonceController::class, 'destroy'])->name('destroy');
     });
 });
 

@@ -11,7 +11,7 @@ class AnnonceController extends Controller
 {
     public function index(Request $request)
     {
-        $query   = Annonce::published()->with('user', 'marque');
+        $query   = Annonce::published()->with('user', 'marque', 'images');
 
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
@@ -52,11 +52,14 @@ class AnnonceController extends Controller
             'description' => 'nullable|string',
             'nom'         => 'required|string|max:100',
             'telephone'   => 'required|string|max:20',
+            'ville'       => 'required|string|max:100',
+            'photos'      => 'nullable|array|max:30',
+            'photos.*'    => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $marque = Marque::find($validated['marque_id']);
 
-        Annonce::create([
+        $annonce = Annonce::create([
             'user_id'     => auth()->id(),
             'marque_id'   => $validated['marque_id'],
             'titre'       => ($marque->nom ?? '') . ' ' . $validated['modele'] . ' ' . $validated['annee'],
@@ -69,15 +72,37 @@ class AnnonceController extends Controller
             'puissance'   => $validated['puissance'],
             'description' => $validated['description'] ?? null,
             'telephone'   => $validated['telephone'],
+            'ville'       => $validated['ville'],
             'statut'      => 'publie',
         ]);
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $index => $photo) {
+                $path = $photo->store('annonces', 'public');
+                $annonce->images()->create([
+                    'path'       => $path,
+                    'is_primary' => ($index === 0),
+                ]);
+            }
+        }
 
         return redirect()->route('occasions.index')->with('success', 'Annonce publiée !');
     }
 
     public function show(Annonce $annonce)
     {
-        $annonce->load('user', 'marque');
+        $annonce->load('user', 'marque', 'images');
         return view('cars-used.show', compact('annonce'));
+    }
+
+    public function destroy(Annonce $annonce)
+    {
+        if (auth()->id() !== $annonce->user_id && !auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
+        $annonce->delete();
+
+        return redirect()->route('occasions.index')->with('success', 'Annonce supprimée avec succès.');
     }
 }

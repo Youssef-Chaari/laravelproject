@@ -71,6 +71,34 @@
     .photo-upload:hover { border-color: var(--blue); }
     .photo-upload i { font-size: 28px; color: var(--gray-400); margin-bottom: 10px; display: block; }
     .photo-upload p { font-size: 14px; color: var(--gray-500); }
+    .photo-upload.dragover { border-color: var(--blue); background: var(--blue-light); opacity: 0.7; }
+
+    /* ── PHOTO PREVIEW GRID ── */
+    .photo-preview-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 16px; margin-top: 20px;
+    }
+    .preview-item {
+        position: relative; aspect-ratio: 1;
+        border-radius: 12px; overflow: hidden;
+        border: 1px solid var(--gray-200);
+        animation: scaleIn .2s ease-out;
+    }
+    @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .preview-item img {
+        width: 100%; height: 100%; object-fit: cover;
+    }
+    .remove-photo {
+        position: absolute; top: 8px; right: 8px;
+        width: 28px; height: 28px; border-radius: 50%;
+        background: rgba(0,0,0,0.5); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        border: none; cursor: pointer; backdrop-filter: blur(4px);
+        transition: all .2s;
+    }
+    .remove-photo:hover { background: var(--orange); transform: scale(1.1); }
+    .remove-photo i { font-size: 13px; }
 
     /* ── SECTION LABEL ── */
     .section-label {
@@ -88,6 +116,13 @@
         display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .btn-publish:hover { background: var(--orange-dark); }
+    
+    /* ── ERROR STYLES ── */
+    .error-msg { color: #ef4444; font-size: 13px; margin-top: 4px; font-weight: 500; }
+    .form-input.is-invalid, .form-select.is-invalid, .form-textarea.is-invalid { border-color: #ef4444; }
+    .alert { padding: 16px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; font-weight: 500; }
+    .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 </style>
 @endpush
 
@@ -103,6 +138,23 @@
 <div class="form-wrapper">
     <div class="form-card">
         <h2>Vendez votre véhicule</h2>
+
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <strong>Oups !</strong> Il y a quelques problèmes avec vos informations.
+                <ul style="margin-top: 8px; padding-left: 20px;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
 
         <form method="POST" action="{{ route('occasions.store') }}" enctype="multipart/form-data">
             @csrf
@@ -188,11 +240,12 @@
             {{-- Photos --}}
             <div class="form-group">
                 <label class="form-label">Photos</label>
-                <label class="photo-upload">
-                    <input type="file" name="photos[]" multiple accept="image/*" style="display:none">
+                <label class="photo-upload" id="drop-zone">
+                    <input type="file" name="photos[]" id="photo-input" multiple accept="image/*" style="display:none">
                     <i class="fa-regular fa-camera"></i>
                     <p>Cliquez pour ajouter des photos</p>
                 </label>
+                <div id="photo-preview-grid" class="photo-preview-grid"></div>
             </div>
 
             {{-- Coordonnées --}}
@@ -205,9 +258,16 @@
                     </div>
                     <div>
                         <label class="form-label">Téléphone</label>
-                        <input type="tel" name="telephone" class="form-input" placeholder="06 12 34 56 78" value="{{ old('telephone') }}" required>
+                        <input type="tel" name="telephone" class="form-input @error('telephone') is-invalid @enderror" placeholder="06 12 34 56 78" value="{{ old('telephone') }}" required>
+                        @error('telephone') <div class="error-msg">{{ $message }}</div> @enderror
                     </div>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Ville</label>
+                <input type="text" name="ville" class="form-input @error('ville') is-invalid @enderror" placeholder="Ex: Paris, Lyon..." value="{{ old('ville') }}" required>
+                @error('ville') <div class="error-msg">{{ $message }}</div> @enderror
             </div>
 
             <button type="submit" class="btn-publish">
@@ -218,3 +278,81 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('photo-input');
+    const grid = document.getElementById('photo-preview-grid');
+    const dropZone = document.getElementById('drop-zone');
+
+    let selectedFiles = [];
+
+    // Sync DataTransfer to input
+    function updateInput() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        input.files = dt.files;
+    }
+
+    function renderPreviews() {
+        grid.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            const item = document.createElement('div');
+            item.className = 'preview-item';
+
+            reader.onload = function(e) {
+                item.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <button type="button" class="remove-photo" data-index="${index}">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+            }
+            reader.readAsDataURL(file);
+            grid.appendChild(item);
+        });
+    }
+
+    input.addEventListener('change', function(e) {
+        const newFiles = Array.from(e.target.files);
+        // Combine with existing files (optional, but usually users expect to append)
+        selectedFiles = [...selectedFiles, ...newFiles].slice(0, 30); // Limit to 30
+        updateInput();
+        renderPreviews();
+    });
+
+    grid.addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('.remove-photo');
+        if (removeBtn) {
+            const index = parseInt(removeBtn.getAttribute('data-index'));
+            selectedFiles.splice(index, 1);
+            updateInput();
+            renderPreviews();
+        }
+    });
+
+    // Drag & Drop visual effects
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (eventName === 'drop') {
+                const droppedFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                selectedFiles = [...selectedFiles, ...droppedFiles].slice(0, 30);
+                updateInput();
+                renderPreviews();
+            }
+        });
+    });
+});
+</script>
+@endpush

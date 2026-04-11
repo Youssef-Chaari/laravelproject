@@ -61,6 +61,7 @@
         cursor: pointer; transition: border-color .15s;
     }
     .gallery-thumb.active { border-color: var(--blue); }
+    .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
     /* ── DESCRIPTION / EQUIPEMENTS ── */
     .info-card {
@@ -185,17 +186,30 @@
 
         {{-- LEFT: GALLERY + INFO --}}
         <div>
-            <div class="gallery-main" style="background:{{ $vehicule->couleur_bg ?? 'linear-gradient(135deg,#EF4444,#B91C1C)' }}">
-                <span>🚗</span>
-                <button class="gallery-nav prev"><i class="fa-solid fa-chevron-left"></i></button>
-                <button class="gallery-nav next"><i class="fa-solid fa-chevron-right"></i></button>
-                <span class="gallery-counter">1 / 4</span>
-            </div>
+            <div class="gallery-wrapper">
+                <div class="gallery-main" style="background:{{ $vehicule->images->isNotEmpty() ? 'none' : ($vehicule->couleur_bg ?? 'linear-gradient(135deg,#EF4444,#B91C1C)') }}">
+                    @if($vehicule->images->isNotEmpty())
+                        <img id="main-img" src="{{ asset('storage/' . $vehicule->images->first()->path) }}" alt="{{ $vehicule->modele }}" style="width:100%; height:100%; object-fit:cover; transition: opacity 0.2s;">
+                        
+                        @if($vehicule->images->count() > 1)
+                            <button class="gallery-nav prev" onclick="changeImage(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                            <button class="gallery-nav next" onclick="changeImage(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                            <span class="gallery-counter" id="gallery-counter">1 / {{ $vehicule->images->count() }}</span>
+                        @endif
+                    @else
+                        <span>🚗</span>
+                    @endif
+                </div>
 
-            <div class="gallery-thumbs">
-                <div class="gallery-thumb active"></div>
-                <div class="gallery-thumb"></div>
-                <div class="gallery-thumb"></div>
+                @if($vehicule->images->count() > 1)
+                    <div class="gallery-thumbs">
+                        @foreach($vehicule->images as $index => $image)
+                            <div class="gallery-thumb {{ $index === 0 ? 'active' : '' }}" onclick="jumpToImage({{ $index }})" data-index="{{ $index }}">
+                                <img src="{{ asset('storage/' . $image->path) }}" alt="Thumbnail">
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             {{-- Description --}}
@@ -297,3 +311,46 @@
     </div>
 </div>
 @endsection
+
+@isset($vehicule->images) @if($vehicule->images->count() > 1)
+@push('scripts')
+<script>
+    const images = @json($vehicule->images->map(fn($i) => asset('storage/' . $i->path)));
+    let currentIndex = 0;
+
+    function changeImage(delta) {
+        currentIndex = (currentIndex + delta + images.length) % images.length;
+        updateGallery();
+    }
+
+    function jumpToImage(index) {
+        currentIndex = index;
+        updateGallery();
+    }
+
+    function updateGallery() {
+        const mainImg = document.getElementById('main-img');
+        const counter = document.getElementById('gallery-counter');
+        const thumbs = document.querySelectorAll('.gallery-thumb');
+
+        mainImg.style.opacity = '0';
+        setTimeout(() => {
+            mainImg.src = images[currentIndex];
+            mainImg.style.opacity = '1';
+        }, 150);
+
+        counter.innerText = `${currentIndex + 1} / ${images.length}`;
+
+        thumbs.forEach((thumb, i) => {
+            if (i === currentIndex) thumb.classList.add('active');
+            else thumb.classList.remove('active');
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') changeImage(-1);
+        if (e.key === 'ArrowRight') changeImage(1);
+    });
+</script>
+@endpush
+@endif @endisset
