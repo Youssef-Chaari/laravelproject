@@ -250,16 +250,14 @@
                         <i class="fa-regular fa-heart"></i>
                         <span>{{ $sujet->likes_count }} likes</span>
                     </div>
-                    @auth
-                        @if(auth()->id() === $sujet->user_id || auth()->user()->role === 'admin')
-                            <form method="POST" action="{{ route('forum.destroy', $sujet->id) }}" onsubmit="return confirm('Supprimer ce sujet ?')" style="margin-left: auto;">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn-delete" style="background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 14px; transition: color .15s;">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
-                        @endif
-                    @endauth
+                    @if(auth()->id() === $sujet->user_id || auth()->user()->role === 'admin')
+                        <form method="POST" action="{{ route('forum.destroy', $sujet->id) }}" onsubmit="return confirm('Supprimer ce sujet ?')" style="margin-left: auto;">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn-delete" style="background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 14px; transition: color .15s;">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
 

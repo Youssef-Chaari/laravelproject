@@ -248,6 +248,10 @@
         </nav>
         <div class="navbar-actions">
             @auth
+                <a href="{{ route('occasions.myAds') }}" class="btn-account">
+                    <i class="fa-solid fa-car-side" style="font-size:14px"></i>
+                    Mes annonces
+                </a>
                 <a href="{{ route('profile.edit') }}" class="btn-account">
                     <i class="fa-regular fa-user" style="font-size:14px"></i>
                     {{ explode(' ', Auth::user()->name)[0] }}
