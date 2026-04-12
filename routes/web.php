@@ -4,6 +4,7 @@ use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\VoitureController;
 use App\Http\Controllers\Front\AnnonceController;
 use App\Http\Controllers\Front\ForumController;
+use App\Http\Controllers\Front\DevisController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MarqueController;
@@ -19,6 +20,7 @@ Route::prefix('voitures-neuves')->name('voitures.')->group(function () {
     Route::get('/',                          [VoitureController::class, 'index'])->name('index');
     Route::get('/{slug}',                   [VoitureController::class, 'marque'])->name('marque');
     Route::get('/{marqueSlug}/{vehiculeSlug}', [VoitureController::class, 'show'])->name('show');
+    Route::post('/{marqueSlug}/{vehiculeSlug}/devis', [DevisController::class, 'generate'])->name('devis');
 });
 
 // Comparer public route
