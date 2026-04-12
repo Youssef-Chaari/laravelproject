@@ -140,7 +140,6 @@
                 <p>Publié le {{ $topic->created_at->format('d/m/Y à H:i') }}</p>
             </div>
             
-            @auth
                 @if(auth()->id() === $topic->user_id || auth()->user()->role === 'admin')
                     <div style="margin-left: auto;">
                         <form method="POST" action="{{ route('forum.destroy', $topic) }}" onsubmit="return confirm('Supprimer ce sujet et tous ses commentaires ?')">
@@ -151,7 +150,6 @@
                         </form>
                     </div>
                 @endif
-            @endauth
         </div>
         
         <h1>{{ $topic->title }}</h1>
@@ -189,16 +187,14 @@
                             <h4 class="comment-author">{{ $comment->user->name }}</h4>
                             <p class="comment-date">{{ $comment->created_at->diffForHumans() }}</p>
                         </div>
-                        @auth
-                            @if(auth()->id() === $comment->user_id || auth()->user()->role === 'admin')
-                                <form method="POST" action="{{ route('forum.comment.destroy', $comment) }}" onsubmit="return confirm('Supprimer ce commentaire ?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn-delete" title="Supprimer">
-                                        <i class="fa-regular fa-trash-can"></i>
-                                    </button>
-                                </form>
-                            @endif
-                        @endauth
+                        @if(auth()->id() === $comment->user_id || auth()->user()->role === 'admin')
+                            <form method="POST" action="{{ route('forum.comment.destroy', $comment) }}" onsubmit="return confirm('Supprimer ce commentaire ?')">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn-delete" title="Supprimer">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </form>
+                        @endif
                     </div>
                     <div class="comment-content">
                         {{ $comment->content }}
@@ -229,30 +225,19 @@
     @endif
 
     {{-- REPLY FORM --}}
-    @auth
-        <div class="reply-card">
-            <h3>Ajouter une réponse</h3>
-            <form method="POST" action="{{ route('forum.comment.store', $topic) }}">
-                @csrf
-                <textarea name="content" class="reply-textarea" placeholder="Rédigez votre réponse ici..." required>{{ old('content') }}</textarea>
-                @error('content') <p style="color:var(--red); font-size:13px; margin-bottom:12px;">{{ $message }}</p> @enderror
-                <div style="display: flex; justify-content: flex-end;">
-                    <button type="submit" class="btn-submit">
-                        <i class="fa-regular fa-paper-plane"></i>
-                        Publier la réponse
-                    </button>
-                </div>
-            </form>
-        </div>
-    @else
-        <div class="guest-cta">
-            <h3>Rejoignez la discussion</h3>
-            <p>Connectez-vous à votre compte pour répondre à ce sujet et échanger avec la communauté.</p>
-            <div class="btn-auth-group">
-                <a href="{{ route('login') }}" class="btn-login">Se connecter</a>
-                <a href="{{ route('register') }}" class="btn-register">Créer un compte</a>
+    <div class="reply-card">
+        <h3>Ajouter une réponse</h3>
+        <form method="POST" action="{{ route('forum.comment.store', $topic) }}">
+            @csrf
+            <textarea name="content" class="reply-textarea" placeholder="Rédigez votre réponse ici..." required>{{ old('content') }}</textarea>
+            @error('content') <p style="color:var(--red); font-size:13px; margin-bottom:12px;">{{ $message }}</p> @enderror
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn-submit">
+                    <i class="fa-regular fa-paper-plane"></i>
+                    Publier la réponse
+                </button>
             </div>
-        </div>
-    @endauth
+        </form>
+    </div>
 </div>
 @endsection

@@ -73,7 +73,7 @@ class AnnonceController extends Controller
             'description' => $validated['description'] ?? null,
             'telephone'   => $validated['telephone'],
             'ville'       => $validated['ville'],
-            'statut'      => 'publie',
+            'statut'      => 'attente',
         ]);
 
         if ($request->hasFile('photos')) {
@@ -86,7 +86,7 @@ class AnnonceController extends Controller
             }
         }
 
-        return redirect()->route('occasions.index')->with('success', 'Annonce publiée !');
+        return redirect()->route('occasions.myAds')->with('success', 'Annonce publiée ! Elle est actuellement en attente de validation par l\'administrateur.');
     }
 
     public function show(Annonce $annonce)
@@ -95,7 +95,59 @@ class AnnonceController extends Controller
         return view('cars-used.show', compact('annonce'));
     }
 
+    public function myAds()
+    {
+        $annonces = Annonce::where('user_id', auth()->id())
+            ->latest()
+            ->get();
+            
+        return view('cars-used.my-ads', compact('annonces'));
+    }
+
+    public function edit(Annonce $annonce)
+    {
+        if (auth()->id() !== $annonce->user_id) {
+            abort(403);
+        }
+
+        $marques = Marque::orderBy('nom')->get();
+        return view('cars-used.edit', compact('annonce', 'marques'));
+    }
+
+    public function update(Request $request, Annonce $annonce)
+    {
+        if (auth()->id() !== $annonce->user_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'marque_id'   => 'required|exists:marques,id',
+            'modele'      => 'required|string|max:100',
+            'annee'       => 'required|integer|min:1990|max:' . date('Y'),
+            'kilometrage' => 'required|integer|min:0',
+            'prix'        => 'required|numeric|min:0',
+            'carburant'   => 'required|in:essence,diesel,hybride,electrique,gpl',
+            'transmission'=> 'required|in:manuelle,automatique',
+            'puissance'   => 'required|integer|min:1',
+            'description' => 'nullable|string',
+            'nom'         => 'required|string|max:100',
+            'telephone'   => 'required|string|max:20',
+            'ville'       => 'required|string|max:100',
+            // Optionnel : on pourrait gérer l'ajout de nouvelles photos si besoin
+        ]);
+
+        $marque = Marque::find($validated['marque_id']);
+        
+        $annonce->update(array_merge($validated, [
+            'titre' => ($marque->nom ?? '') . ' ' . $validated['modele'] . ' ' . $validated['annee'],
+            'statut' => 'attente', // Retour en modération
+        ]));
+
+        return redirect()->route('occasions.myAds')->with('success', 'Annonce modifiée avec succès. Elle repasse en attente de validation.');
+    }
+
     public function destroy(Annonce $annonce)
+
     {
         if (auth()->id() !== $annonce->user_id && !auth()->user()->isAdmin()) {
             abort(403);

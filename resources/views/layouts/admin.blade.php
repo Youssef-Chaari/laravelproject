@@ -195,7 +195,11 @@
         </a>
         <a href="{{ route('admin.vehicules.index') }}" class="sidebar-link {{ request()->routeIs('admin.vehicules.*') ? 'active' : '' }}">
             <i class="fa-solid fa-car"></i>
-            Véhicules
+            Véhicules Neufs
+        </a>
+        <a href="{{ route('admin.annonces.index') }}" class="sidebar-link {{ request()->routeIs('admin.annonces.*') ? 'active' : '' }}">
+            <i class="fa-solid fa-clipboard-check"></i>
+            Modération Occasions
         </a>
         <a href="{{ route('admin.clients.index') }}" class="sidebar-link {{ request()->routeIs('admin.clients.*') ? 'active' : '' }}">
             <i class="fa-solid fa-users"></i>
