@@ -17,10 +17,10 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // New Cars (voitures neuves)
 Route::prefix('voitures-neuves')->name('voitures.')->group(function () {
-    Route::get('/',                          [VoitureController::class, 'index'])->name('index');
-    Route::get('/{slug}',                   [VoitureController::class, 'marque'])->name('marque');
-    Route::get('/{marqueSlug}/{vehiculeSlug}', [VoitureController::class, 'show'])->name('show');
-    Route::post('/{marqueSlug}/{vehiculeSlug}/devis', [DevisController::class, 'generate'])->name('devis');
+    Route::get('/',[VoitureController::class, 'index'])->name('index');
+    Route::get('/{slug}',[VoitureController::class, 'marque'])->name('marque');
+    Route::get('/{marqueSlug}/{vehiculeSlug}',[VoitureController::class, 'show'])->name('show');
+    Route::post('/{marqueSlug}/{vehiculeSlug}/devis',[DevisController::class, 'generate'])->name('devis');
 });
 
 // Comparer public route
@@ -39,7 +39,7 @@ Route::prefix('occasions')->name('occasions.')->group(function () {
 });
 
 // Forum (public listing + post)
-Route::prefix('forum')->name('forum.')->group(function () {
+Route::middleware('auth')->prefix('forum')->name('forum.')->group(function () {
     Route::get('/',    [ForumController::class, 'index'])->name('index');
     Route::post('/',   [ForumController::class, 'store'])->name('store');
     Route::get('/{topic}', [ForumController::class, 'show'])->name('show');
